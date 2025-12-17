@@ -31,10 +31,6 @@ DEFAULTS = {
     "cnn1d_filters": [64, 128],
     "cnn1d_kernel_sizes": [5, 3],
     "cnn1d_pool_size": 2,
-    "lr_reduce_on_plateau": True,
-    "lr_patience": 10,
-    "lr_factor": 0.5,
-    "lr_min": 1e-6,
 }
 
 
@@ -71,10 +67,6 @@ def resolve_config(args: argparse.Namespace) -> SimpleNamespace:
     cfg_dict["learning_rate"] = float(cfg_dict["learning_rate"])
     cfg_dict["data_path"] = str(cfg_dict["data_path"])
     cfg_dict["model_type"] = str(cfg_dict["model_type"]).lower()
-    cfg_dict["lr_reduce_on_plateau"] = str(cfg_dict["lr_reduce_on_plateau"]).lower() not in ["false", "0", "none"]
-    cfg_dict["lr_patience"] = int(cfg_dict["lr_patience"])
-    cfg_dict["lr_factor"] = float(cfg_dict["lr_factor"])
-    cfg_dict["lr_min"] = float(cfg_dict["lr_min"])
     return SimpleNamespace(**cfg_dict)
 
 
@@ -156,12 +148,6 @@ def build_model(cfg: SimpleNamespace, input_dim: int) -> tf.keras.Model:
     raise ValueError(f"Unsupported model_type '{cfg.model_type}'. Choose 'dense' or 'cnn1d'.")
 
 
-def print_model_summary(model: tf.keras.Model) -> None:
-    print("\nModel architecture:")
-    model.summary()
-    print(f"Total parameters: {model.count_params():,}\n")
-
-
 def init_wandb(cfg: argparse.Namespace):
     if cfg.wandb_mode == "disabled":
         return wandb.init(mode="disabled")
@@ -185,10 +171,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cnn1d-filters", type=int, nargs="+", default=None, help="Conv1D filter sizes per layer.")
     parser.add_argument("--cnn1d-kernel-sizes", type=int, nargs="+", default=None, help="Conv1D kernel sizes per layer (must match filters length).")
     parser.add_argument("--cnn1d-pool-size", type=int, default=None, help="MaxPool1D pool size (set to 1 or 0 to disable pooling).")
-    parser.add_argument("--lr-reduce-on-plateau", type=str, default=None, help="Enable/disable LR reduction (true/false).")
-    parser.add_argument("--lr-patience", type=int, default=None, help="LR scheduler patience (epochs without val improvement).")
-    parser.add_argument("--lr-factor", type=float, default=None, help="LR scheduler reduction factor (new_lr = lr * factor).")
-    parser.add_argument("--lr-min", type=float, default=None, help="Minimum learning rate for scheduler.")
     parser.add_argument(
         "--wandb-mode",
         type=str,
@@ -223,22 +205,10 @@ def main() -> None:
     else:
         model = build_model(cfg=cfg, input_dim=input_dim)
 
-    print_model_summary(model)
-
     run = init_wandb(cfg)
     callbacks = []
     if cfg.wandb_mode != "disabled":
         callbacks.append(WandbCallback(save_model=False, save_graph=False))
-    if cfg.lr_reduce_on_plateau:
-        callbacks.append(
-            tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_loss",
-                factor=cfg.lr_factor,
-                patience=cfg.lr_patience,
-                min_lr=cfg.lr_min,
-                verbose=1,
-            )
-        )
 
     if cfg.epochs > 0:
         model.fit(

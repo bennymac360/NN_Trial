@@ -26,6 +26,7 @@ python train.py --config config.yaml
 ### Architecture selection
 - Set `model_type: dense` (default) to use the fully-connected stack defined by `dense_sizes`.
 - Set `model_type: cnn1d` to use a 1D CNN; configure `cnn1d_filters`, `cnn1d_kernel_sizes`, and `cnn1d_pool_size` in `config.yaml`.
+- Learning-rate reduction: control with `lr_reduce_on_plateau`, `lr_patience`, `lr_factor`, `lr_min` in `config.yaml` (ReduceLROnPlateau on `val_loss`).
 
 CLI overrides (examples):
 - `--epochs 10` : override epochs from config.
@@ -44,4 +45,5 @@ This will load the saved model, compute metrics on the held-out validation split
 - Loss: Mean Squared Error; optimizer: Adam; activations: ReLU on hidden layers, linear on the output for regression.
 - The number of hidden Dense layers is determined by `dense_sizes` in `config.yaml` (or CLI); provide any length list to build that many layers.
 - For `cnn1d`, the feature vector is reshaped to `(sequence_length, 1)`, then a stack of Conv1D + optional MaxPool layers (from `cnn1d_filters`/`cnn1d_kernel_sizes`/`cnn1d_pool_size`) feeds into a Dense head for regression.
+- ReduceLROnPlateau is enabled by default; tune or disable it via config.
 - Deterministic seeds are set for reproducibility; disable GPU nondeterminism separately if needed.

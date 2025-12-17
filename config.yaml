@@ -1,14 +1,18 @@
 # Default training configuration
 data_path: training_data.txt
-epochs: 100
-batch_size: 32
-learning_rate: 0.001
-test_size: 0.2
-dense_sizes: [256, 128, 64]
+epochs: 500
+batch_size: 8
+learning_rate: 0.0001
+test_size: 0.9
+dense_sizes: [16,8]
 model_type: dense  # options: dense, cnn1d
 cnn1d_filters: [64, 128]
 cnn1d_kernel_sizes: [5, 3]
 cnn1d_pool_size: 2
+lr_reduce_on_plateau: true
+lr_patience: 10
+lr_factor: 0.5
+lr_min: 0.000001
 seed: 131434
 model_dir: artifacts
 load_existing:
